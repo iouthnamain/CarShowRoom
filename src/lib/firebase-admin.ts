@@ -1,12 +1,25 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import * as admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
+
+export const auth = admin.auth();
+export const db = admin.firestore();
+export const storage = admin.storage();
 
 // Khởi tạo Firebase Admin SDK một cách an toàn
 export function getFirebaseAdminApp() {
-  if (getApps().length === 0) {
+  if (admin.apps.length === 0) {
     try {
-      return initializeApp({
-        credential: cert({
+      return admin.initializeApp({
+        credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -18,14 +31,14 @@ export function getFirebaseAdminApp() {
       return undefined as any;
     }
   }
-  return getApps()[0];
+  return admin.apps[0];
 }
 
 // Lấy instance của Auth
 export function getFirebaseAdminAuth() {
   try {
     const app = getFirebaseAdminApp();
-    return app ? getAuth(app) : null;
+    return app ? auth : null;
   } catch (error) {
     console.error("Lỗi khi lấy Firebase Auth:", error);
     return null;
