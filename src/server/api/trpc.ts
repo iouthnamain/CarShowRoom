@@ -27,11 +27,26 @@ import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
  *
  * @see https://trpc.io/docs/server/context
  */
+type CreateContextOptions = {
+  session: any | null;
+  req?: any;
+  res?: any;
+};
+
+const createInnerTRPCContext = (opts: CreateContextOptions) => {
+  return {
+    session: opts.session,
+    prisma,
+    req: opts.req,
+    res: opts.res,
+  };
+};
+
 export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   const { req, res } = opts;
 
-  // Get the session from the server using the getServerSession wrapper function
-  const token = req.headers.authorization?.split(' ')[1];
+  // Get the session from Firebase Auth
+  const token = req.headers.authorization?.split(" ")[1];
   let user = null;
 
   if (token) {
@@ -39,16 +54,15 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
       const decodedToken = await getAuth().verifyIdToken(token);
       user = decodedToken;
     } catch (error) {
-      console.error('Error verifying Firebase token:', error);
+      console.error("Error verifying Firebase token:", error);
     }
   }
 
-  return {
-    prisma,
-    user,
+  return createInnerTRPCContext({
+    session: user,
     req,
     res,
-  };
+  });
 };
 
 /**
@@ -134,12 +148,12 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.user) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  if (!ctx.session) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
-      user: ctx.user,
+      session: ctx.session,
     },
   });
 });

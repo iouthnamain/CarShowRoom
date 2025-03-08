@@ -31,9 +31,8 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "~/*": ["./src/*"]
     },
     "forceConsistentCasingInFileNames": true
   },
